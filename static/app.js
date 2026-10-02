@@ -1028,6 +1028,37 @@ function renderHand(container, hand, validSuits, onClick) {
   }
 }
 
+/**
+ * Render a seat's held cards on the 3D table.
+ * Pass `hand` to show face-up mini cards; otherwise `count` card backs.
+ * `direction` is 'h' for horizontal fans (top) or 'v' for vertical (sides).
+ */
+function renderSeatHand(container, count, hand, direction = 'h') {
+  container.innerHTML = '';
+  if (count <= 0) return;
+  const cards = [];
+  if (hand) {
+    for (const suit of CARD_SUITS) {
+      for (const value of (hand[suit] || [])) {
+        cards.push(createCardEl(value, suit, { mini: true }));
+      }
+    }
+  } else {
+    for (let i = 0; i < count; i++) {
+      const back = document.createElement('div');
+      back.className = 'card-back-mini';
+      cards.push(back);
+    }
+  }
+  const mid = (cards.length - 1) / 2;
+  cards.forEach((card, i) => {
+    const angle = (i - mid) * (direction === 'v' ? 3.0 : 3.4);
+    card.style.transform = `rotate(${angle}deg)`;
+    card.style.zIndex = String(100 - Math.abs(i - mid));
+    container.appendChild(card);
+  });
+}
+
 function getBidFromNum(num) {
   const suitNum = num % 5;
   const suit = BID_SUITS[suitNum];
@@ -1392,13 +1423,13 @@ function showPartnerNotification(bidderName) {
 
 function showTrickWonBanner(winnerName) {
   const table = $('play-table');
-  const existing = table?.querySelector('.trick-won-banner') ?? document.querySelector('.trick-won-banner');
+  const existing = document.querySelector('.trick-won-banner');
   if (existing) existing.remove();
 
   const div = document.createElement('div');
   div.className = 'trick-won-banner';
   div.textContent = `${winnerName} wins the trick`;
-  (table || document.body).appendChild(div);
+  (table?.closest('.table-viewport') || table || document.body).appendChild(div);
   setTimeout(() => {
     div.classList.add('fade-out');
     setTimeout(() => div.remove(), 400);
@@ -2156,7 +2187,9 @@ function renderPlay(s) {
       const countdownStr = (seat === s.turn && !player.connected && player.disconnectedAt)
         ? `<span class="disconnect-countdown">${disconnectCountdownText(player.disconnectedAt)}</span>`
         : '';
-      label.innerHTML = `<span class="seat-name-row">${bidderStar}${partnerStar}${statusDot(player.connected)}<span class="seat-name">${esc(player.name)}</span>${eyeIcons}</span><span class="seat-sets">${sets}</span>${countdownStr}`;
+      const initial = esc((player.name || '?').trim().charAt(0).toUpperCase() || '?');
+      label.dataset.seat = String(seat);
+      label.innerHTML = `<span class="seat-avatar">${initial}</span><span class="seat-meta"><span class="seat-name-row">${bidderStar}${partnerStar}${statusDot(player.connected)}<span class="seat-name">${esc(player.name)}</span>${eyeIcons}</span><span class="seat-sets">${sets}</span>${countdownStr}</span>`;
       label.className = 'seat-label';
       if (seat === s.turn) {
         label.classList.add('active-turn');
@@ -2174,6 +2207,23 @@ function renderPlay(s) {
     startDisconnectCountdown(renderPlay);
   } else {
     stopDisconnectCountdown();
+  }
+
+  // Seat holdings: opponents show a fan of card backs. The player's own
+  // holding is the full hand row below the table, so its seat is left empty.
+  const completedTricks = (s.sets ?? [0, 0, 0, 0]).reduce((a, b) => a + b, 0);
+  for (let i = 0; i < 4; i++) {
+    const seat = seatOrder[i];
+    const pos = positions[i];
+    const handEl = $(`seat-${pos}-hand`);
+    if (!handEl) continue;
+    const isMe = !s.isSpectator && seat === s.mySeat;
+    if (isMe) {
+      handEl.innerHTML = '';
+      continue;
+    }
+    const remaining = Math.max(0, 13 - completedTricks - (s.playedCards[seat] ? 1 : 0));
+    renderSeatHand(handEl, remaining, null, (pos === 'left' || pos === 'right') ? 'v' : 'h');
   }
 
   // Trick area
@@ -2891,6 +2941,27 @@ $('btn-join-spectator').addEventListener('click', () => {
 if (!joinAs && sessionStorage.getItem('joinRole')) {
   joinAs = sessionStorage.getItem('joinRole');
 }
+
+// --- 3D table view toggle ---
+function apply3dPreference() {
+  const enabled = localStorage.getItem('fb_table_3d') !== '0';
+  document.body.classList.toggle('view-3d', enabled);
+  const btn = $('btn-toggle-3d');
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(enabled));
+    btn.title = enabled ? 'Switch to flat table view' : 'Switch to 3D table view';
+  }
+}
+
+const toggle3dBtn = $('btn-toggle-3d');
+if (toggle3dBtn) {
+  toggle3dBtn.addEventListener('click', () => {
+    const enabled = !document.body.classList.contains('view-3d');
+    localStorage.setItem('fb_table_3d', enabled ? '1' : '0');
+    apply3dPreference();
+  });
+}
+apply3dPreference();
 
 // Auto-reconnect or pre-fill from URL hash
 if (roomCode && playerName && roomCodeFromHash && !joinAs) {

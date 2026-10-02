@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=4">
 </head>
 <body>
 
@@ -217,6 +217,7 @@
         <span id="play-partner-info"></span>
         <span id="play-trump-info"></span>
         <span id="play-practice-badge" class="practice-badge hidden">Practice</span>
+        <button id="btn-toggle-3d" class="btn-toggle-3d" type="button" aria-pressed="true" title="Switch to flat table view">3D</button>
       </div>
 
       <div id="play-spectator-switcher" class="spectator-seat-switcher hidden">
@@ -224,40 +225,41 @@
         <div class="switcher-buttons"></div>
       </div>
 
+      <div class="table-viewport">
       <div class="table" id="play-table">
         <!-- Opponent top (seat across) -->
         <div class="seat seat-top">
+          <div class="seat-hand" id="seat-top-hand"></div>
           <div class="seat-label" id="seat-top-label"></div>
           <div class="chat-bubble" id="chat-bubble-top"></div>
-          <div class="seat-card" id="seat-top-card"></div>
         </div>
 
         <!-- Opponent left -->
         <div class="seat seat-left">
+          <div class="seat-hand" id="seat-left-hand"></div>
           <div class="seat-label" id="seat-left-label"></div>
           <div class="chat-bubble" id="chat-bubble-left"></div>
-          <div class="seat-card" id="seat-left-card"></div>
         </div>
 
         <!-- Opponent right -->
         <div class="seat seat-right">
+          <div class="seat-hand" id="seat-right-hand"></div>
           <div class="seat-label" id="seat-right-label"></div>
           <div class="chat-bubble" id="chat-bubble-right"></div>
-          <div class="seat-card" id="seat-right-card"></div>
         </div>
 
         <!-- Current player (bottom) -->
         <div class="seat seat-bottom">
+          <div class="seat-hand" id="seat-bottom-hand"></div>
           <div class="seat-label" id="seat-bottom-label"></div>
           <div class="chat-bubble" id="chat-bubble-bottom"></div>
-          <div class="seat-card" id="seat-bottom-card"></div>
         </div>
 
         <!-- Trick area center -->
         <div class="trick-area" id="trick-area"></div>
-
-        <!-- Last trick mini panel (bottom-right of table) -->
-        <div id="last-trick-panel" class="last-trick-panel hidden"></div>
+      </div>
+      <!-- Last trick mini panel (HUD, top-left of the table view) -->
+      <div id="last-trick-panel" class="last-trick-panel hidden"></div>
       </div>
 
       <div id="play-fullboard" class="fullboard-hands hidden"></div>
@@ -339,6 +341,6 @@
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=4"></script>
 </body>
 </html>
